@@ -21,9 +21,17 @@
   <ItemGroup>
     <ClCompile Include="src\dr_dll_entry.cpp" />
     <ClCompile Include="src\evtcb\bb.cpp" />
+    <ClCompile Include="src\evtcb\exit.cpp" />
+    <ClCompile Include="src\evtcb\load.cpp" />
+    <ClCompile Include="src\utils\api_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\common.h" />
     <ClInclude Include="src\evtcb\bb.h" />
+    <ClInclude Include="src\evtcb\exit.h" />
+    <ClInclude Include="src\evtcb\load.h" />
+    <ClInclude Include="src\utils\api_filter.h" />
+    <ClInclude Include="src\utils\com_utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -78,7 +86,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)..\dynamorio\ext\include;$(ProjectDir)..\dynamorio\ext\lib32\release\debug;$(ProjectDir)..\dynamorio\ext\lib32\release\release;$(ProjectDir)..\dynamorio\ext\lib64\release\release;$(ProjectDir)..\dynamorio\ext\lib64\release\debug;$(ProjectDir)..\dynamorio\include;$(ProjectDir)..\dynamorio\lib32;$(ProjectDir)..\dynamorio\lib64;$(ProjectDir)..\dynamorio\lib32\release;$(ProjectDir)..\dynamorio\lib32\debug;$(ProjectDir)..\dynamorio\lib64\release;$(ProjectDir)..\dynamorio\lib64\debug;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\dynamorio\ext\include;$(ProjectDir)..\dynamorio\ext\lib32\release\debug;$(ProjectDir)..\dynamorio\ext\lib32\release\release;$(ProjectDir)..\dynamorio\ext\lib64\release\release;$(ProjectDir)..\dynamorio\ext\lib64\release\debug;$(ProjectDir)..\dynamorio\include;$(ProjectDir)..\dynamorio\lib32;$(ProjectDir)..\dynamorio\lib64;$(ProjectDir)..\dynamorio\lib32\release;$(ProjectDir)..\dynamorio\lib32\debug;$(ProjectDir)..\dynamorio\lib64\release;$(ProjectDir)..\dynamorio\lib64\debug;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <OutDir>$(SolutionDir)..\debug\</OutDir>
   </PropertyGroup>
@@ -97,8 +105,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;DRINJECTCORE_EXPORTS;_WINDOWS;_USRDLL;WINDOWS;X86_32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>WIN32;_DEBUG;DRINJECTCORE_EXPORTS;_WINDOWS;_USRDLL;WINDOWS;X86_32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
