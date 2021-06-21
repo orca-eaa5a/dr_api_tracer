@@ -15,40 +15,43 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\evtcb\bb.cpp">
+    <ClCompile Include="src\drltrace_libcalls.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="src\dr_dll_entry.cpp">
+    <ClCompile Include="src\api_tracer_core.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="src\evtcb\load.cpp">
+    <ClCompile Include="src\sym\sym_util.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="src\evtcb\exit.cpp">
+    <ClCompile Include="src\dr_options\drltrace_options.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\api_filter.cpp">
+    <ClCompile Include="src\log.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="src\drltrace_utils.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\evtcb\bb.h">
+    <ClInclude Include="src\dr_options\drltrace_options.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\evtcb\load.h">
+    <ClInclude Include="src\sym\sym_util.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\common.h">
+    <ClInclude Include="src\log.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\evtcb\exit.h">
+    <ClInclude Include="src\drltrace.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\api_filter.h">
+    <ClInclude Include="src\drltrace_utils.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\com_utils.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\drltrace_win.config" />
   </ItemGroup>
 </Project>

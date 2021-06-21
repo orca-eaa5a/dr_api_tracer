@@ -141,15 +141,9 @@ int wmain(int argc, const TCHAR *targv[])
 
 	if (!droption_parser_t::parse_argv(DROPTION_SCOPE_FRONTEND, argc, (const char **)argv,
 		&parse_err, &last_index) || argc < 2) {
-		DRLTRACE_ERROR("Usage error: %s\n Usage:\n%s\n", parse_err.c_str(),
-			droption_parser_t::usage_short(DROPTION_SCOPE_ALL).c_str());
+		DRLTRACE_ERROR("Usage error: %s\n Usage:\n%s\n", "unknown option", "dr_c_frontend -- [target_app]");
 	}
-	/*
-	if (op_help.get_value()) {
-		printf("Usage:\n%s", droption_parser_t::usage_long(DROPTION_SCOPE_ALL).c_str());
-		return 0;
-	}
-	*/
+
 	dr_enable_console_printing();
 
 	target_app_name = argv[last_index];
