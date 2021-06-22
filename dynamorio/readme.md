@@ -5,4 +5,4 @@ Make directory and named as ***dynamorio***
 
 move `ext, include, lib32, lib64` at ***dynamorio*** directory
 
-![](../img/dynamorio.png)
+![](../img/dynamorio.PNG)
