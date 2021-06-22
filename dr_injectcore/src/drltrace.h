@@ -186,21 +186,6 @@ typedef struct _drltrace_arg_t {
 	uint64 value64;
 } drltrace_arg_t;
 
-typedef struct _APIInfo {
-	std::string api_name;
-	unsigned int address;
-	unsigned int ret_val;
-}APIInfo, *PAPIInfo;
-
-typedef struct _BasicBlockIR {
-	unsigned block_id;
-	app_pc bb_start_addr;
-	app_pc bb_end_addr;
-	instr_t* bb_last_inst;
-	PAPIInfo pAPIinfo;
-	unsigned int exe_cnt;
-}BasicBlockIR, *PBasicBlockIR;
-
 void parse_config(void);
 std::vector<drltrace_arg_t *> *libcalls_search(const char *name);
 void libcalls_hashtable_delete();

@@ -7,39 +7,29 @@
 #include "log.h"
 /* Where to write the trace */
 
-/* Avoid exe exports, as on Linux many apps have a ton of global symbols. */
+
 static app_pc exe_start;
 static app_pc exe_img_base;
-PBasicBlockIR pCur_bb_ir;
-PAPIInfo cur_api_info;
-std::mutex mtx;
+void* dr_mtx = dr_mutex_create();
 
-/****************************************************************************
- * Library entry wrapping
- */
+static void event_exit_cb(void)
+{	
+	if (op_use_config.get_value())
+		libcalls_hashtable_delete();
 
+	if (outf != STDERR) {
+		if (op_print_ret_addr.get_value())
+			drmodtrack_dump(outf);
+		dr_close_file(outf);
+	}
 
-/****************************************************************************
- * Init and exit
- */
-
-static void
-event_exit(void)
-{
-    if (op_use_config.get_value())
-        libcalls_hashtable_delete();
-
-    if (outf != STDERR) {
-        if (op_print_ret_addr.get_value())
-            drmodtrack_dump(outf);
-        dr_close_file(outf);
-    }
-
-    drx_exit();
-    drwrap_exit();
-    drmgr_exit();
-    if (op_print_ret_addr.get_value())
-        drmodtrack_exit();
+	drx_exit();
+	drwrap_exit();
+	drmgr_exit();
+	if (op_print_ret_addr.get_value())
+		drmodtrack_exit();
+	
+	dr_printf("application launch finished\n");
 }
 
 
@@ -53,18 +43,13 @@ static bool is_api_call(app_pc target_pc) {
 	return false;
 }
 
-static void cb_pre_apicall(void *wrapcontext, void **user_data) {
-	BasicBlockIR* udata = (BasicBlockIR*)*user_data;
-	const char *name = udata->pAPIinfo->api_name.c_str();
+static void pre_apicall_cb(void *wrapcontext, void **user_data) {
+	uintptr_t targ = *(uintptr_t*)user_data;
+	const char *name = NULL;
 	const char *modname = NULL;
 	app_pc func = drwrap_get_func(wrapcontext);
 	module_data_t *mod;
-	thread_id_t tid;
-	uint mod_id;
-	app_pc mod_start, ret_addr;
-	drcovlib_status_t res;
 
-	uintptr_t targ = udata->pAPIinfo->address;
 	mod = dr_lookup_module(dr_fragment_app_pc((app_pc)targ));
 	if (mod != NULL)
 		modname = dr_module_preferred_name(mod);
@@ -77,78 +62,53 @@ static void cb_pre_apicall(void *wrapcontext, void **user_data) {
 		if (sym->is_code)
 			api_addr = sym->addr;
 		if (api_addr == (app_pc)targ) {
-			udata->pAPIinfo->api_name = std::string(sym->name);
+			name = sym->name;
 			break;
 		}
 	}
+	dr_mutex_lock(dr_mtx);
 	dr_symbol_export_iterator_stop(exp_iter);
-	dr_fprintf(outf, "%s!%s:[0x%x]", modname, udata->pAPIinfo->api_name.c_str(), udata->pAPIinfo->address);
+	dr_fprintf(outf, "%s!%s:[0x%x]", modname, name, targ);
 	print_symbolic_args(name, wrapcontext, func);
 	dr_fprintf(outf, "\n");
+	dr_mutex_unlock(dr_mtx);
 }
 
-static void cb_post_apicall(void *wrapcontext, void *user_data) {
-	BasicBlockIR* udata = (BasicBlockIR*)user_data;
-
-	udata->exe_cnt += 1;
+static void post_apicall_cb(void *wrapcontext, void *user_data) {
+	uintptr_t targ = (uintptr_t)user_data;
 	DR_TRY_EXCEPT(
 		drwrap_get_drcontext(wrapcontext), {
-			udata->pAPIinfo->ret_val = (unsigned int)drwrap_get_retval(wrapcontext);
+			dr_mutex_lock(dr_mtx);
+			dr_fprintf(outf, "    ret : 0x%x\n\n", (unsigned int)drwrap_get_retval(wrapcontext));
+			dr_mutex_unlock(dr_mtx);
 		}, {
 			dr_messagebox("???%x", drwrap_get_retval(wrapcontext));
-			udata->pAPIinfo->ret_val = 0;
-		}
-		);
-	udata->pAPIinfo->ret_val = (unsigned int)drwrap_get_retval(wrapcontext);
-	dr_fprintf(outf, "    ret : 0x%x\n\n", udata->pAPIinfo->ret_val);
-	DR_TRY_EXCEPT(
-		drwrap_get_drcontext(wrapcontext), {
-			drwrap_unwrap(
-				(app_pc)udata->pAPIinfo->address,
-				cb_pre_apicall,
-				cb_post_apicall
-			);
-		}, {
-			dr_messagebox("drwrap_unwrap error");
 		}
 	);
 }
 
 static void set_api_instrument(uintptr_t src, uintptr_t targ)
 {
+	
 	if (is_api_call((app_pc)targ)) {
-		cur_api_info = new APIInfo;
-		pCur_bb_ir->pAPIinfo = cur_api_info;
-		pCur_bb_ir->pAPIinfo->address = targ;
-		drwrap_wrap_ex(
-			(app_pc)targ,
-			cb_pre_apicall,
-			cb_post_apicall,
-			(void*)pCur_bb_ir,
-			false
-		);
+		if (!drwrap_is_wrapped(
+				(app_pc)targ,
+				pre_apicall_cb,
+				post_apicall_cb
+			)){
+			drwrap_wrap_ex(
+				(app_pc)targ,
+				pre_apicall_cb,
+				post_apicall_cb,
+				(void*)targ,
+				false
+			);
+		}
 	}
+	
 }
 
-PBasicBlockIR create_new_bb_ir(
-	void* drcontext,
-	void* tag, // bb address
-	instrlist_t* bb,
-	instr_t* bb_last_inst,
-	void* user_data
-) {
-	PBasicBlockIR bb_ir = new BasicBlockIR;
-	ZeroMemory(bb_ir, sizeof(BasicBlockIR));
-	bb_ir->block_id = *(int*)tag;
-	bb_ir->bb_start_addr = instr_get_app_pc(instrlist_first(bb));
-	bb_ir->bb_end_addr = instr_get_app_pc(bb_last_inst); // end of bb
-	bb_ir->bb_last_inst = bb_last_inst;
-	bb_ir->exe_cnt += 1;
-
-	return bb_ir;
-}
-
-dr_emit_flags_t bb_creation_event(
+dr_emit_flags_t bb_creation_event_cb(
 	void* drcontext,
 	void* tag, // bb address
 	instrlist_t* bb,
@@ -158,6 +118,7 @@ dr_emit_flags_t bb_creation_event(
 	void* user_data
 )
 {
+	
 	module_data_t *mod = dr_lookup_module(dr_fragment_app_pc(tag));
 	if (mod != NULL) {
 		bool is_exe = (mod->start == exe_img_base);
@@ -166,8 +127,6 @@ dr_emit_flags_t bb_creation_event(
 			return DR_EMIT_DEFAULT;
 		}
 	}
-	PBasicBlockIR bb_ir = create_new_bb_ir(drcontext, tag, bb, last_instr, user_data);
-	pCur_bb_ir = bb_ir;
 	if (instr_is_call(last_instr)) {
 		if (instr_is_call_indirect(last_instr)) {
 			opnd_t target_opnd = instr_get_target(last_instr);
@@ -176,23 +135,38 @@ dr_emit_flags_t bb_creation_event(
 			}
 		}
 	}
+	
 	return DR_EMIT_DEFAULT;
 }
 
+static void
+thread_init_cb(void *drcontext)
+{
+	uintptr_t tid = dr_get_thread_id(drcontext);
+	dr_printf("[%d] new thread init\n",tid);
+}
+
+static void
+thread_exit_cb(void *drcontext)
+{
+	uintptr_t tid = dr_get_thread_id(drcontext);
+	dr_printf("[%d] thread exit\n", tid);
+}
 
 DR_EXPORT void
 dr_client_main(client_id_t id, int argc, const char *argv[])
 {
     module_data_t *exe;
     IF_DEBUG(bool ok;)
-
-    dr_set_client_name("dr_api_tracer", "???");
-
+	
+	dr_enable_console_printing();
+    dr_set_client_name("Dr_api_tracer", "");
+	
 	if (!droption_parser_t::parse_argv(DROPTION_SCOPE_CLIENT, argc, argv,
 		NULL, NULL)) {
 		ASSERT(false, "unable to parse options specified for drltracelib");
 	}
-
+	
     IF_DEBUG(ok = )
         drmgr_init();
     ASSERT(ok, "drmgr failed to initialize");
@@ -213,15 +187,16 @@ dr_client_main(client_id_t id, int argc, const char *argv[])
 		exe_start = exe->start;
 		exe_img_base = exe_start;
 	}
-	dr_printf("dll client attached!!");
-    dr_free_module_data(exe);
+	dr_free_module_data(exe);
+	
+	dr_printf("dll client attached!!\n");
 
-    drwrap_set_global_flags((drwrap_global_flags_t)
-                            (DRWRAP_NO_FRILLS | DRWRAP_FAST_CLEANCALLS));
-
-    dr_register_exit_event(event_exit);
-	drmgr_register_bb_instrumentation_event(NULL, bb_creation_event, NULL);
-    dr_enable_console_printing();
+    drwrap_set_global_flags((drwrap_global_flags_t) (DRWRAP_NO_FRILLS | DRWRAP_FAST_CLEANCALLS));
+	
+    dr_register_exit_event(event_exit_cb);
+	drmgr_register_bb_instrumentation_event(NULL, bb_creation_event_cb, NULL);
+	drmgr_register_thread_init_event(thread_init_cb);
+	drmgr_register_thread_exit_event(thread_exit_cb);
     if (op_max_args.get_value() > 0)
         parse_config();
 

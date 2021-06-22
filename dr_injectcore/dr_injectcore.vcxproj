@@ -94,6 +94,7 @@
     <IncludePath>$(ProjectDir)..\dynamorio\ext\include;$(ProjectDir)..\dynamorio\ext\lib32\release\debug;$(ProjectDir)..\dynamorio\ext\lib32\release\release;$(ProjectDir)..\dynamorio\ext\lib64\release\release;$(ProjectDir)..\dynamorio\ext\lib64\release\debug;$(ProjectDir)..\dynamorio\include;$(ProjectDir)..\dynamorio\lib32;$(ProjectDir)..\dynamorio\lib64;$(ProjectDir)..\dynamorio\lib32\release;$(ProjectDir)..\dynamorio\lib32\debug;$(ProjectDir)..\dynamorio\lib64\release;$(ProjectDir)..\dynamorio\lib64\debug;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <OutDir>$(SolutionDir)..\debug\</OutDir>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -109,18 +110,21 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;DRINJECTCORE_EXPORTS;_WINDOWS;_USRDLL;WINDOWS;X86_32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>$(ProjectDir)..\dynamorio\ext\lib32\debug;$(ProjectDir)..\dynamorio\ext\lib32\release;$(ProjectDir)..\dynamorio\ext\lib64\debug;$(ProjectDir)..\dynamorio\ext\lib64\release;$(ProjectDir)..\dynamorio\lib32;$(ProjectDir)..\dynamorio\lib32\release;$(ProjectDir)..\dynamorio\lib32\debug;$(ProjectDir)..\dynamorio\lib64;$(ProjectDir)..\dynamorio\lib64\release;$(ProjectDir)..\dynamorio\lib64\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <AdditionalDependencies>drconfiglib.lib;dbghelp_imports.lib;drlibc.lib;ntdll_imports.lib;drdecode.lib;dynamorio.lib;dynamorio_static.lib;drbbdup.lib;drbbdup_static.lib;drcontainers.lib;drcovlib.lib;drcovlib_static.lib;drmgr.lib;drmgr_static.lib;drreg.lib;drreg_static.lib;drsyms.lib;drsyms_static.lib;drutil.lib;drutil_static.lib;drwrap.lib;drwrap_static.lib;drx.lib;drx_static.lib;dwarf.lib;elftc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
